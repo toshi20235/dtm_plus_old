@@ -1,42 +1,47 @@
 Rails.application.routes.draw do
-  get 'posts/index'
-  get 'posts/show'
+  devise_for :users,skip: [:passwords], controllers: {
+  registrations: "public/registrations",
+  sessions: 'public/sessions'
+  }
+
+  devise_for :admin, skip: [:registrations, :passwords] ,controllers: {
+  sessions: "admin/sessions"
+  }
+  
+  root to: 'posts#index'
+  
   namespace :admin do
-    get 'homes/top'
+     get '/' => "homes#top"
   end
+  
   namespace :public do
-    get 'posts/index'
-    get 'posts/show'
-    get 'albums/index'
-    get 'albums/destroy'
-    get 'favorites/create'
-    get 'favorites/destroy'
-    get 'relationships/create'
-    get 'relationships/destroy'
-    get 'relationships/followings'
-    get 'relationships/followers'
-    get 'musics/new'
-    get 'musics/index'
-    get 'musics/show'
-    get 'musics/create'
-    get 'musics/destroy'
-    get 'users/show'
-    get 'users/edit'
-    get 'users/update'
-    get 'users/withdraw'
-    get 'homes/top'
+    
+    root to: "homes#top"
+    
+    resources :posts do  #postsコントローラへのルーティング  
+      resources :comments, only: [:create]  #commentsコントローラへのルーティング
+      resource :favorites, only: [:create, :destroy]
+    end
+    
+    resources :albums, only: [:index, :destroy]
+   
+    resources :users do
+      resource :relationships, only: [:create, :destroy]
+      get 'followings' => 'relationships#followings', as: 'followings'
+      get 'followers' => 'relationships#followers', as: 'followers'
+    end
+    
+    resources :musics, only: [:new, :index,:show,:create,:destroy]
+    
+    get 'users/my_page' => 'users#show'                          #顧客のマイページ.
+    get 'users/information/edit' => 'users#edit'                 #顧客の登録情報編集画面.
+    patch 'users/information' => 'users#update'                  #顧客の登録情報更新.
+    patch 'users/withdraw' => 'users#withdraw'        #顧客の退会処理(ステータスの更新).
+    
   end
   
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 
   # Defines the root path route ("/")
   # root "articles#index"
- devise_for :users,skip: [:passwords], controllers: {
-  registrations: "public/registrations",
-  sessions: 'public/sessions'
-}
-
-devise_for :admin, skip: [:registrations, :passwords] ,controllers: {
-  sessions: "admin/sessions"
-}
 end
